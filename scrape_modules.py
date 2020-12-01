@@ -19,7 +19,7 @@ class ScrapeIshikawa():
         driver = webdriver.Chrome(options=options)
         return driver
 
-    def get_sikyou_url(self, driver):
+    def scrape_sikyou_url(self, driver):
         url = 'http://www.pref.ishikawa.jp/suisan/center/sigenbu.files/price_information/sanchishikyou-top.html'
         driver.get(url)
         time.sleep(1)
