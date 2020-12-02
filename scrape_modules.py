@@ -1,5 +1,6 @@
 import pandas as pd
 import time
+from datetime import datetime
 import re
 from selenium import webdriver
 import chromedriver_binary
@@ -48,6 +49,13 @@ class ScrapeIshikawa():
         for sikyou_atag in sikyou_atag_list:
                 sikyo_url = sikyou_atag["href"]
                 sikyou_date = sikyou_atag.text.strip()
+                date_pattern = re.compile(r"[0-9]{4}年[0-9]+月[0-9]+日")
+                sikyou_date = date_pattern.match(sikyou_date)
+                if sikyou_date != None:
+                    sikyou_date = sikyou_date.group()
+                    sikyou_date = datetime.strptime(sikyou_date, "%Y年%m月%d日").strftime("%Y-%m-%d")
+                else:
+                    raise Exception(sikyou_date, "日付の型が一致しません")
                 sikyou_date_url[sikyou_date] = sikyo_url
         return sikyou_date_url
 
@@ -78,7 +86,10 @@ class ScrapeIshikawa():
     # データ結合
     def concat_new_data(self):
         self.sps_data_new = pd.concat([self.scrape_data, self.sps_data])
-
+        self.sps_data_new['日付'] = pd.to_datetime(self.sps_data_new['日付'], format='%Y-%m-%d')
+        self.sps_data_new = self.sps_data_new.sort_values(['日付'], ascending=False)
+        self.sps_data_new = self.sps_data_new.astype(str)
+    
     # スプレッドシートの値を更新
     def save_sps(self):
         set_with_dataframe(self.worksheet, self.sps_data_new)
