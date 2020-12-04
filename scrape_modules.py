@@ -90,6 +90,41 @@ class ScrapeIshikawa():
         self.sps_data_new = self.sps_data_new.sort_values(['日付'], ascending=False)
         self.sps_data_new = self.sps_data_new.astype(str)
     
+    # 銘柄を魚種と目方に分離
+    def container2species_size(self, container):
+        if '(' in container:
+            out_brancket = container.split('(')[0]
+            in_brancket = container.split('(')[1].split(')')[0]
+            species, size = self.divide2species_size(out_brancket, in_brancket)
+        else:
+            container = container
+            species = container
+            size = None
+        return species, size
+    
+    # 1. out_brancketに規格が含まれている場合（out_brancketに含まれる規格は数字のみ）
+    # out_brancketを魚種と規格に分ける
+    # 2. out_brancketに規格が含まれていない場合
+    # in_brancketの中身が規格かどうか判断（in_brancketに含まれる規格以外にも「バラ」「大」などがある）
+    # 3. in_brancketにも規格が含まれていない場合
+    # 規格無しとして登録
+    def divide2species_size(self, out_brancket, in_brancket):
+        size_list = [r'[0-9]+', "大", "中", "小", "小小", "ﾊﾞﾗ", "雄", "雌", "子持"]
+        size = re.search(r'[0-9]+', out_brancket)
+        if size != None:
+            species = out_brancket[:size.start()]
+            size = size.group()
+            return species, size
+
+        size = [in_brancket for s in size_list if re.match(s, in_brancket)]
+        if len(size) != 0:
+            species = out_brancket
+            size = size[0]
+        else:
+            species = out_brancket
+            size = None
+        return species, size
+
     # スプレッドシートの値を更新
     def save_sps(self):
         set_with_dataframe(self.worksheet, self.sps_data_new)
