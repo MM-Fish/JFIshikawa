@@ -21,7 +21,7 @@ class ScrapeIshikawa():
         
         # スプレッドシートのデータ取得
         sps_data = get_as_dataframe(self.worksheet, usecols=range(8), header=0)
-        self.sps_data = sps_data.dropna()
+        self.sps_data = sps_data[~sps_data['日付'].isnull()]
 
         # 新しくスクレイピングして取得するデータ用のデータフレーム
         self.scrape_data = pd.DataFrame()
@@ -89,6 +89,7 @@ class ScrapeIshikawa():
         self.sps_data_new['日付'] = pd.to_datetime(self.sps_data_new['日付'], format='%Y-%m-%d')
         self.sps_data_new = self.sps_data_new.sort_values(['日付'], ascending=False)
         self.sps_data_new = self.sps_data_new.astype(str)
+        self.sps_data_new.reset_index(drop=True, inplace=True)
     
     # 銘柄を魚種と目方に分離
     def container2species_size(self, container):
@@ -110,7 +111,7 @@ class ScrapeIshikawa():
     # 規格無しとして登録
     def divide2species_size(self, out_brancket, in_brancket):
         size_list = [r'[0-9]+', "大", "中", "小", "小小", "ﾊﾞﾗ", "雄", "雌", "子持"]
-        size = re.search(r'[0-9]+', out_brancket)
+        size = re.search(r'[0-9]{1,10}.', out_brancket)
         if size != None:
             species = out_brancket[:size.start()]
             size = size.group()
@@ -122,7 +123,7 @@ class ScrapeIshikawa():
             size = size[0]
         else:
             species = out_brancket
-            size = None
+            size = ""
         return species, size
 
     # スプレッドシートの値を更新
