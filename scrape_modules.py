@@ -12,16 +12,17 @@ from gspread_dataframe import get_as_dataframe, set_with_dataframe
 from oauth2client.service_account import ServiceAccountCredentials 
 
 class ScrapeIshikawa():
-    def __init__(self, sps_url):
+    def __init__(self, sps_url, sheet_name="市況"):
         # スプレッドシートにアクセス
         scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
         credentials = ServiceAccountCredentials.from_json_keyfile_name('jfishikawa-297306-53b695eb342f.json', scope)
         gc = gspread.authorize(credentials)
-        self.worksheet = gc.open_by_url(sps_url).sheet1
+        self.workbook = gc.open_by_url(sps_url)
+        worksheet = self.workbook.worksheet(sheet_name)
         
         # スプレッドシートのデータ取得
-        sps_data = get_as_dataframe(self.worksheet, usecols=range(8), header=0)
-        self.sps_data = sps_data[~sps_data['日付'].isnull()]
+        # self.sps_data = get_as_dataframe(worksheet, usecols=range(10), header=0)
+        self.sps_data = pd.DataFrame(worksheet.get_all_values())
 
         # 新しくスクレイピングして取得するデータ用のデータフレーム
         self.scrape_data = pd.DataFrame()
@@ -90,6 +91,8 @@ class ScrapeIshikawa():
         self.sps_data_new = self.sps_data_new.sort_values(['日付'], ascending=False)
         self.sps_data_new = self.sps_data_new.astype(str)
         self.sps_data_new.reset_index(drop=True, inplace=True)
+        self.sps_data_new = self.sps_data_new[~self.sps_data_new['日付'].isnull()]
+
     
     # 銘柄を魚種と目方に分離
     def container2species_size(self, container):
@@ -100,7 +103,7 @@ class ScrapeIshikawa():
         else:
             container = container
             species = container
-            size = None
+            size = "-"
         return species, size
     
     # 1. out_brancketに規格が含まれている場合（out_brancketに含まれる規格は数字のみ）
@@ -123,9 +126,25 @@ class ScrapeIshikawa():
             size = size[0]
         else:
             species = out_brancket
-            size = ""
+            size = "-"
         return species, size
+    
+    def toAlpha(self, num):
+        if num<=26:
+            return chr(64+num)
+        else:
+            raise Exception("too much columns")
 
     # スプレッドシートの値を更新
-    def save_sps(self):
-        set_with_dataframe(self.worksheet, self.sps_data_new)
+    def save_sps(self, sheet_name):
+        worksheet = self.workbook.worksheet(sheet_name)
+        col_lastnum = len(self.sps_data_new.columns)
+        row_lastnum = len(self.sps_data_new.index)
+        cell_list = worksheet.range('A1:'+self.toAlpha(col_lastnum)+str(row_lastnum))
+        for cell in cell_list:
+            if cell.row == 1:
+                val = self.sps_data_new.columns[cell.col-1]
+            else:
+                val = self.sps_data_new.iloc[cell.row-2][cell.col-1]
+            cell.value = val
+        worksheet.update_cells(cell_list)
