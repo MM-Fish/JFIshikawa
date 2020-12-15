@@ -23,6 +23,8 @@ class ScrapeIshikawa():
         # スプレッドシートのデータ取得
         # self.sps_data = get_as_dataframe(worksheet, usecols=range(10), header=0)
         self.sps_data = pd.DataFrame(worksheet.get_all_values())
+        self.sps_data.columns = self.sps_data.iloc[0]
+        self.sps_data.drop([0], inplace=True)
 
         # 新しくスクレイピングして取得するデータ用のデータフレーム
         self.scrape_data = pd.DataFrame()
@@ -148,3 +150,48 @@ class ScrapeIshikawa():
                 val = self.sps_data_new.iloc[cell.row-2][cell.col-1]
             cell.value = val
         worksheet.update_cells(cell_list)
+
+    # 魚種に対して全サイズの平均価格を算出。
+    # 魚種を列，日付を行としたデータフレームを作成。
+    def per_day(self, date):
+        self.sps_data_new["平均[円/kg]"] = self.sps_data_new["平均[円/kg]"].astype(int)
+        df_merge_species = pd.DataFrame(self.sps_data_new.groupby(['日付', '魚種'])["平均[円/kg]"].mean()).reset_index()
+        df = df_merge_species.loc[df_merge_species['日付'] == date, ['魚種', '平均[円/kg]']].set_index('魚種').T
+        df.reset_index(drop=True)
+        df.insert(0, '日付', date)
+        return df
+    
+    # per_dayを全魚種に対して実行
+    def merge_per_day(self):
+        date_list = self.sps_data_new['日付'].unique()
+        df_per_day = pd.concat([self.per_day(date) for date in reversed(date_list)])
+        df_per_day.reset_index(drop=True, inplace=True)
+        return df_per_day
+    
+    # ある魚種に対して，日付を行，サイズを列としたデータフレームを作成。
+    def per_day_and_species(self, date, species):
+        df = self.sps_data_new.loc[ (self.sps_data_new['日付'] == date) & (self.sps_data_new['魚種'] == species), ['漁法&目方', '平均[円/kg]']].set_index('漁法&目方').T.reset_index(drop=True)
+        df.insert(0, '魚種', species)
+        df.insert(1, '日付', date)
+        return df
+
+    # per_day_and_speciesを全日付に対して実行
+    def merge_day_per_ds(self, species):
+        date_list = self.sps_data_new['日付'].unique()
+        df = pd.concat([self.per_day_and_species(date, species) for date in reversed(date_list)])
+        df_sum = pd.DataFrame(df.sum()).T
+        df_sum['日付'] = '1990-01-01'
+        df_sum['魚種'] = df['魚種'].iloc[0]
+        df1 = pd.concat([df, df_sum])
+        return df1
+
+    # merge_day_per_dsを全魚種に対して実行
+    def merge_all_per_ds(self):
+        self.sps_data_new['漁法&目方'] = self.sps_data_new['目方'].map(lambda x: x.replace('-', '') ) + self.sps_data_new['漁　法'].map(lambda x: '('+x+')')
+        species_list = self.sps_data_new['魚種'].unique()
+        df_per_day_and_species = pd.concat([self.merge_day_per_ds(species) for species in species_list])
+        return df_per_day_and_species
+    
+    def set_with_df(self, sheet_name, data):
+        worksheet = self.workbook.worksheet(sheet_name)
+        set_with_dataframe(worksheet, data)
