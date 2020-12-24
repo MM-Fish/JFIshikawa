@@ -2,6 +2,7 @@ from scrape_modules import ScrapeIshikawa
 import requests
 import slackweb
 import os
+import json
 
 google_api_json={
   "type": os.environ["type"].replace('\\n', '\n'),
