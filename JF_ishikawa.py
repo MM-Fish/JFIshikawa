@@ -4,16 +4,16 @@ import slackweb
 import os
 
 google_api_json={
-  "type": os.environ["type"],
-  "project_id": os.environ["project_id"],
-  "private_key_id": os.environ["private_key_id"],
-  "private_key": os.environ["private_key"],
-  "client_email": os.environ["client_email"],
-  "client_id": os.environ["client_id"],
-  "auth_uri": os.environ["auth_uri"],
-  "token_uri": os.environ["token_uri"],
-  "auth_provider_x509_cert_url": os.environ["auth_provider_x509_cert_url"],
-  "client_x509_cert_url": os.environ["client_x509_cert_url"]
+  "type": os.environ["type"].replace('\\n', '\n'),
+  "project_id": os.environ["project_id"].replace('\\n', '\n'),
+  "private_key_id": os.environ["private_key_id"].replace('\\n', '\n'),
+  "private_key": os.environ["private_key"].replace('\\n', '\n'),
+  "client_email": os.environ["client_email"].replace('\\n', '\n'),
+  "client_id": os.environ["client_id"].replace('\\n', '\n'),
+  "auth_uri": os.environ["auth_uri"].replace('\\n', '\n'),
+  "token_uri": os.environ["token_uri"].replace('\\n', '\n'),
+  "auth_provider_x509_cert_url": os.environ["auth_provider_x509_cert_url"].replace('\\n', '\n'),
+  "client_x509_cert_url": os.environ["client_x509_cert_url"].replace('\\n', '\n')
 }
 
 
