@@ -1,0 +1,8 @@
+slackweb==1.0.5
+pandas==1.0.2
+selenium==3.141.0
+chromedriver-binary==87.0.4280.88.0
+bs4==0.0.1
+gspread==3.6.0
+gspread-dataframe==3.1.2
+oauth2client==4.1.3
