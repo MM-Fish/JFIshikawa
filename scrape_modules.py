@@ -3,7 +3,6 @@ import time
 from datetime import datetime
 import re
 from selenium import webdriver
-import chromedriver_binary
 from bs4 import BeautifulSoup
 import bs4
 import json
