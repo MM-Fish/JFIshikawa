@@ -1,4 +1,4 @@
-test.ipynb
+*.ipynb
 debug.log
 /__pycache__
 *.json
