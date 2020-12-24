@@ -2,3 +2,4 @@
 debug.log
 /__pycache__
 *.json
+*.env

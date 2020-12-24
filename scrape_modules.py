@@ -12,10 +12,10 @@ from gspread_dataframe import get_as_dataframe, set_with_dataframe
 from oauth2client.service_account import ServiceAccountCredentials 
 
 class ScrapeIshikawa():
-    def __init__(self, sps_url, sheet_name="市況"):
+    def __init__(self, google_api_json, sps_url, sheet_name="市況"):
         # スプレッドシートにアクセス
         scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
-        credentials = ServiceAccountCredentials.from_json_keyfile_name('jfishikawa-297306-53b695eb342f.json', scope)
+        credentials = ServiceAccountCredentials.from_json_keyfile_dict(google_api_json, scope)
         gc = gspread.authorize(credentials)
         self.workbook = gc.open_by_url(sps_url)
         worksheet = self.workbook.worksheet(sheet_name)
