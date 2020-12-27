@@ -56,11 +56,12 @@ df_per_day_and_species.head(5)
 # データ保存
 si.set_with_df("by_species_size", df_per_day_and_species)
 
-# slackに通知
-content = {
-    "icon_url" : "https://drive.google.com/uc?export=view&id=1bbPewWm7dHriVWqHQ2IJe3uzwbN1-RHE",
-    'username': "JF石川市況",
-    "text": f"JF石川の市況データを更新しました\n{important_list['sps_url']}"
-    }
-webhook_url = os.environ["slack_webhook_url"]
-requests.post(webhook_url, data = json.dumps(content))
+# 新しい市況が取得できた場合のみslackに通知
+if len(si.sps_data_new) > 0:
+  content = {
+      "icon_url" : "https://drive.google.com/uc?export=view&id=1bbPewWm7dHriVWqHQ2IJe3uzwbN1-RHE",
+      'username': "JF石川市況",
+      "text": f"JF石川の市況データを更新しました\n{important_list['sps_url']}"
+      }
+  webhook_url = os.environ["slack_webhook_url"]
+  requests.post(webhook_url, data = json.dumps(content))
