@@ -57,6 +57,7 @@ df_per_day_and_species.head(5)
 si.set_with_df("by_species_size", df_per_day_and_species)
 
 # 新しい市況が取得できた場合のみslackに通知
+print(si.sps_data)
 if len(si.sps_data) > 0:
   content = {
       "icon_url" : "https://drive.google.com/uc?export=view&id=1bbPewWm7dHriVWqHQ2IJe3uzwbN1-RHE",
