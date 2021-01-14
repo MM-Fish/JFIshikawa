@@ -178,11 +178,11 @@ class ScrapeIshikawa():
     def merge_day_per_ds(self, species):
         date_list = self.sps_data_new['日付'].unique()
         df = pd.concat([self.per_day_and_species(date, species) for date in reversed(date_list)])
-        df_sum = pd.DataFrame(df.sum()).T
-        df_sum['日付'] = '1990-01-01'
-        df_sum['魚種'] = df['魚種'].iloc[0]
-        df1 = pd.concat([df, df_sum])
-        return df1
+        # df_sum = pd.DataFrame(df.sum()).T
+        # df_sum['日付'] = '1990-01-01'
+        # df_sum['魚種'] = df['魚種'].iloc[0]
+        # df1 = pd.concat([df, df_sum])
+        return df
 
     # merge_day_per_dsを全魚種に対して実行
     def merge_all_per_ds(self):
