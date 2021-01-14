@@ -33,7 +33,7 @@ class ScrapeIshikawa():
         options = webdriver.ChromeOptions()
         if headless==True:
             options.add_argument('--headless')
-        options.add_argument('--no-sandbox')
+        options.add_argument('--no-box')
         driver = webdriver.Chrome(options=options)
         return driver
 
@@ -162,22 +162,28 @@ class ScrapeIshikawa():
     
     # per_dayを全魚種に対して実行
     def merge_per_day(self):
-        date_list = self.sps_data_new['日付'].unique()
-        df_per_day = pd.concat([self.per_day(date) for date in reversed(date_list)])
-        df_per_day.reset_index(drop=True, inplace=True)
+        date_list = list(reversed(sorted(self.sps_data_new['日付'].unique())))
+        df = pd.concat([self.per_day(date) for date in date_list])
+        df.reset_index(drop=True, inplace=True)
+
+        df_per_day = df.T.reset_index().drop(0).sort_values('index')
+        df_per_day = df_per_day.set_index('index').T
+        df_per_day.insert(0, '日付', date_list)
+        df_per_day
         return df_per_day
     
+
     # ある魚種に対して，日付を行，サイズを列としたデータフレームを作成。
-    def per_day_and_species(self, date, species):
+    def per_day_species(self, date, species):
         df = self.sps_data_new.loc[ (self.sps_data_new['日付'] == date) & (self.sps_data_new['魚種'] == species), ['漁法&目方', '平均[円/kg]']].set_index('漁法&目方').T.reset_index(drop=True)
         df.insert(0, '魚種', species)
         df.insert(1, '日付', date)
         return df
 
-    # per_day_and_speciesを全日付に対して実行
+    # per_day_speciesを全日付に対して実行
     def merge_day_per_ds(self, species):
-        date_list = self.sps_data_new['日付'].unique()
-        df = pd.concat([self.per_day_and_species(date, species) for date in reversed(date_list)])
+        date_list = sorted(self.sps_data_new['日付'].unique())
+        df = pd.concat([self.per_day_species(date, species) for date in reversed(date_list)])
         # df_sum = pd.DataFrame(df.sum()).T
         # df_sum['日付'] = '1990-01-01'
         # df_sum['魚種'] = df['魚種'].iloc[0]
@@ -187,10 +193,22 @@ class ScrapeIshikawa():
     # merge_day_per_dsを全魚種に対して実行
     def merge_all_per_ds(self):
         self.sps_data_new['漁法&目方'] = self.sps_data_new['目方'].map(lambda x: x.replace('-', '') ) + self.sps_data_new['漁　法'].map(lambda x: '('+x+')')
-        species_list = self.sps_data_new['魚種'].unique()
-        df_per_day_and_species = pd.concat([self.merge_day_per_ds(species) for species in species_list])
-        return df_per_day_and_species
+        species_list = sorted(self.sps_data_new['魚種'].unique())
+        df_per_day_species = pd.concat([self.merge_day_per_ds(species) for species in species_list])
+        return df_per_day_species
     
+    # df_per_day_speciesの列名をデータフレームの最初の行に追加
+    def add_header_each_speceies(self, df_per_day_species, species):
+        df_T = df_per_day_species.query(f'魚種 == "{species}"').T
+        df_T.insert(0, '0',df_per_day_species.columns)
+        return df_T.T
+
+    def merge_all_per_ds_with_header(self, df_per_day_species):
+        species_list = sorted(self.sps_data_new['魚種'].unique())
+        df_per_day_species_with_header = pd.concat([self.add_header_each_speceies(df_per_day_species, species) for species in species_list])
+        return df_per_day_species_with_header.reset_index(drop=True).drop(0)
+
+
     def set_with_df(self, sheet_name, data):
         worksheet = self.workbook.worksheet(sheet_name)
         set_with_dataframe(worksheet, data)
