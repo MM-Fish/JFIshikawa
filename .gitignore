@@ -1,4 +1,5 @@
 *.ipynb
+test.py
 debug.log
 /__pycache__
 *.json

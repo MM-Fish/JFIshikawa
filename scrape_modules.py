@@ -121,7 +121,8 @@ class ScrapeIshikawa():
             size = size.group()
             return species, size
 
-        size = [in_brancket for s in size_list if re.match(s, in_brancket)]
+        # size = [in_brancket for s in size_list if re.match(s, in_brancket)]
+        size = [in_brancket for s in size_list if (re.match(s, in_brancket)) or (s in in_brancket)]
         if len(size) != 0:
             species = out_brancket
             size = size[0]
@@ -166,9 +167,10 @@ class ScrapeIshikawa():
         df = pd.concat([self.per_day(date) for date in date_list])
         df.reset_index(drop=True, inplace=True)
 
-        df_per_day = df.T.reset_index().drop(0).sort_values('index')
-        df_per_day = df_per_day.set_index('index').T
+        df_per_day = df.T.reset_index().drop(0).sort_values('魚種')
+        df_per_day = df_per_day.set_index('魚種').T
         df_per_day.insert(0, '日付', date_list)
+        df_per_day.columns.names = [None]
         df_per_day
         return df_per_day
     
@@ -205,6 +207,7 @@ class ScrapeIshikawa():
 
     def merge_all_per_ds_with_header(self, df_per_day_species):
         species_list = sorted(self.sps_data_new['魚種'].unique())
+        species_list.remove('その他')
         df_per_day_species_with_header = pd.concat([self.add_header_each_speceies(df_per_day_species, species) for species in species_list])
         return df_per_day_species_with_header.reset_index(drop=True).drop(0)
 
